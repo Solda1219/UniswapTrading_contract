@@ -166,7 +166,8 @@ contract UniswapTrading {
     IDEXRouter router;
     function swapWithETH(address routerAddr, address tokenInput, address tokenOut, bool buyToken0) public payable returns (bool) {
         require(buyToken0 == true, "Not set as sell");
-        require(msg.value>= 100000000000000000, "Insufficiant from send");
+        require(tokenOut != WETH, "Directly deposit to WETH");
+        // require(msg.value>= 100000000000000000, "Insufficiant from send");
         router= IDEXRouter(routerAddr);
         address[] memory path;
         path = new address[](2);
