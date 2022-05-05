@@ -175,7 +175,10 @@ interface IDEXFactory {
 interface IDEXRouter {
     function factory() external pure returns (address);
     function WETH() external pure returns (address);
-
+    function getAmountsOut(
+        uint256 amountIn, 
+        address[] memory path
+    )external view returns (uint256[] memory amounts);
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -262,7 +265,7 @@ contract UniswapTrading {
         address token,
         address spender,
         uint256 amount
-    ) public returns (bool)
+    ) internal returns (bool)
     {
         IERC20 _token;
         _token= IERC20(token);
@@ -276,6 +279,34 @@ contract UniswapTrading {
         }
         return true;
     }
+
+    // This function will return the minimum amount from a swap.
+    // Input the 3 parameters below and it will return the minimum amount out.
+    function getAmountOutMin(
+        address _tokenIn, 
+        address _tokenOut, 
+        uint256 _amountIn
+    ) public view returns (uint256)
+    {
+        //path is array of addresses.
+        // This path array will have 3 addresses [tokenIn, WRAPPED, tokenOut].
+        // The if statement below takes into account if token in or token out is WRAPPED,  then the path has only 2 addresses.
+        address[] memory path;
+        if(_tokenIn== WETH || _tokenOut== WETH){
+            path= new address[](2);
+            path[0]= _tokenIn;
+            path[1]= _tokenOut;
+        }else{
+            path= new address[](3);
+            path[0]= _tokenIn;
+            path[1]= WETH;
+            path[2]= _tokenOut;
+        }
+        uint256[] memory amountOutMins= router.getAmountsOut(_amountIn, path);
+        uint256 amountOut= amountOutMins[path.length -1];
+        return amountOut;
+    }
+
     function swapWithETH(
         address tokenInput, 
         address tokenOut, 
