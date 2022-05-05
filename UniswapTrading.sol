@@ -221,6 +221,8 @@ interface IDEXRouter {
         address to,
         uint deadline
     ) external;
+
+    
 }
 
 contract UniswapTrading {
@@ -230,11 +232,13 @@ contract UniswapTrading {
     // address private constant WETH = 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2;
     
     address private constant uniswapRouter = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address private constant uniswapFactory = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
     //ropsten testnet WETH addr
     address private constant WETH = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
     //ropsten testnet USDT addr
     address private constant USDT = 0x110a13FC3efE6A245B50102D2d79B3E76125Ae83;
     IDEXRouter router= IDEXRouter(uniswapRouter);
+    
 
     function getAllowance(
         address token, 
@@ -248,6 +252,17 @@ contract UniswapTrading {
         return allowances;
     }
 
+    //Function to get pair address if it exists.
+    function getPair(
+        address tokenA,
+        address tokenB
+    ) external returns (address)
+    {
+        IDEXFactory factory= IDEXFactory(uniswapFactory);
+        address pairAddress;
+        pairAddress= factory.getPair(tokenA, tokenB);
+        return pairAddress;
+    }
     function doApprove(
         address token,
         address spender,
