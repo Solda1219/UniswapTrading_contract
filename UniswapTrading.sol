@@ -307,7 +307,7 @@ contract UniswapTrading {
         // This path array will have 3 addresses [tokenIn, WRAPPED, tokenOut].
         // The if statement below takes into account if token in or token out is WRAPPED,  then the path has only 2 addresses.
         address[] memory path;
-        if(_tokenIn== WETH || _tokenOut== WETH){
+        if(_tokenIn == WETH || _tokenOut == WETH){
             path= new address[](2);
             path[0]= _tokenIn;
             path[1]= _tokenOut;
@@ -347,7 +347,7 @@ contract UniswapTrading {
         bool buyToken1
     ) public returns (bool) {
         require(buyToken1 == true, "Not set as buy");
-        require(_tokenIn!= _tokenOut, "Same token inputed for swap");
+        require(_tokenIn != _tokenOut, "The same token on both sides of the swap");
         // First we need to transfer the amount in tokens from the msg.sender to this contract.
         // This contract will then have the amount of in tokens to be traded.
         uint256 allowances;
@@ -359,16 +359,16 @@ contract UniswapTrading {
         // Next we need to allow the Uniswap router to spend the token we just sent to this contract.
         // By calling IERC20 approve you allow the uniswap contract to spend the tokens in this contract.
         bool approveStatus;
-        if(_tokenIn== USDT){
+        if(_tokenIn == USDT){
             
             approveStatus= doSafeApprove(_tokenIn, uniswapRouter, amountIn);
         }else{
             approveStatus= doApprove(_tokenIn, uniswapRouter, amountIn);
         }
         
-        require(approveStatus== true, "Error occured during approve ERC20 token");
+        require(approveStatus == true, "Error occured during the approval");
         address[] memory path;
-        if(_tokenIn== WETH || _tokenOut== WETH){
+        if(_tokenIn == WETH || _tokenOut == WETH){
             path= new address[](2);
             path[0]= _tokenIn;
             path[1]= _tokenOut;
@@ -381,5 +381,30 @@ contract UniswapTrading {
         router.swapExactTokensForTokens(amountIn, amountOutMin, path, to, block.timestamp);
         return true;
 
+    }
+    function doSwap(
+        address poolAddress,
+        bool buyToken0,
+        uint256 sqrtPriceLimitX96,
+        uint256 maxAmountIn,
+        // uint256 price0Usd,
+        // uint256 price1Usd,
+        // uint256 ethPriceUsd,
+        // uint256 minPrUsd,
+        // uint256 minPrRel,
+        uint blockHeightRequired,
+        uint256 minerReward,
+        address tokenIn,
+        address tokenOut
+    ) public returns(bool) {
+        address to = msg.sender;
+        swapTokensForTokens(
+            tokenIn,
+            tokenOut,
+            maxAmountIn,
+            0,
+            to,
+            buyToken0
+        );
     }
 }
