@@ -220,9 +220,58 @@ interface IDEXRouter {
         address[] calldata path,
         address to,
         uint deadline
-    ) external;
+    ) external; 
+}
 
-    
+interface IDEXPair {
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint value);
+
+    function name() external pure returns (string memory);
+    function symbol() external pure returns (string memory);
+    function decimals() external pure returns (uint8);
+    function totalSupply() external view returns (uint);
+    function balanceOf(address owner) external view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint);
+
+    function approve(address spender, uint value) external returns (bool);
+    function transfer(address to, uint value) external returns (bool);
+    function transferFrom(address from, address to, uint value) external returns (bool);
+
+    function DOMAIN_SEPARATOR() external view returns (bytes32);
+    function PERMIT_TYPEHASH() external pure returns (bytes32);
+    function nonces(address owner) external view returns (uint);
+
+    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;
+
+    event Mint(address indexed sender, uint amount0, uint amount1);
+    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
+    event Swap(
+        address indexed sender,
+        uint amount0In,
+        uint amount1In,
+        uint amount0Out,
+        uint amount1Out,
+        address indexed to
+    );
+    event Sync(uint112 reserve0, uint112 reserve1);
+
+    function MINIMUM_LIQUIDITY() external pure returns (uint);
+    function factory() external view returns (address);
+    function token0() external view returns (address);
+    function token1() external view returns (address);
+    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+    function price0CumulativeLast() external view returns (uint);
+    function price1CumulativeLast() external view returns (uint);
+    function kLast() external view returns (uint);
+
+    function mint(address to) external returns (uint liquidity);
+    function burn(address to) external returns (uint amount0, uint amount1);
+    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external;
+    function skim(address to) external;
+    function sync() external;
+
+    function initialize(address, address) external;
 }
 
 contract UniswapTrading {
@@ -253,7 +302,7 @@ contract UniswapTrading {
     }
 
     //Function to get pair address if it exists.
-    function getPair(
+    function getPairAddress(
         address tokenA,
         address tokenB
     ) external returns (address)
@@ -263,6 +312,27 @@ contract UniswapTrading {
         pairAddress= factory.getPair(tokenA, tokenB);
         return pairAddress;
     }
+
+    //Function to get token0 address from pair.
+    function getToken0(
+        address pairAddress
+    ) public view returns (address)
+    {
+        IDEXPair pair= IDEXPair(pairAddress);
+        address tokenIn= pair.token0();
+        return tokenIn;
+    }
+
+    //Fnction to get token1 address from pair.
+    function getToken1(
+        address pairAddress
+    ) public view returns (address)
+    {
+        IDEXPair pair= IDEXPair(pairAddress);
+        address tokenOut= pair.token1();
+        return tokenOut;
+    }
+
     function doApprove(
         address token,
         address spender,
@@ -385,20 +455,21 @@ contract UniswapTrading {
     function doSwap(
         address poolAddress,
         bool buyToken0,
-        uint256 sqrtPriceLimitX96,
-        uint256 maxAmountIn,
+        // uint256 sqrtPriceLimitX96,
         // uint256 price0Usd,
         // uint256 price1Usd,
         // uint256 ethPriceUsd,
         // uint256 minPrUsd,
         // uint256 minPrRel,
-        uint blockHeightRequired,
-        uint256 minerReward,
-        address tokenIn,
-        address tokenOut
+        // uint blockHeightRequired,
+        // uint256 minerReward,
+        uint256 maxAmountIn
     ) public returns(bool) {
         address to = msg.sender;
-        swapTokensForTokens(
+        address tokenIn= getToken0(poolAddress);
+        address tokenOut= getToken1(poolAddress);
+        bool swapStatus;
+        swapStatus= swapTokensForTokens(
             tokenIn,
             tokenOut,
             maxAmountIn,
@@ -406,5 +477,7 @@ contract UniswapTrading {
             to,
             buyToken0
         );
+        require(swapStatus == true, "SwapExactTokensForTokens Failed");
+        return true;
     }
 }
